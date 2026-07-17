@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Quelle** | Video „My NEW UPDATED Trading Strategy for 2026 (70% Winrate)" von PB Blake (youtube.com/watch?v=9O6JU5_xTd8), vollständiges Transkript vom Nutzer bereitgestellt |
-| **Status** | Schritt 1 abgeschlossen — **wartet auf Review durch den Nutzer (Schritt 2)** |
+| **Status** | Schritt 2 abgeschlossen — Review-Antworten des Nutzers (R1–R19) eingearbeitet; technische Spezifikation: `docs/SPEC.md` |
 | **Grundsatz** | Es wurden **keine Regeln erfunden**. Alles, was das Video nicht hergibt, ist markiert: ❓ = offene Rückfrage, 🔧 = Definitionsvorschlag zur Automatisierung (nicht wörtlich aus dem Video, muss bestätigt werden), 🚫 = im Video nicht enthalten |
 | **Sprache** | Deutsch; Fachbegriffe bleiben englisch (FVG, CISD, IFVG, …) |
 
@@ -73,8 +73,7 @@ Das Video benutzt Swing-Punkte durchgehend, definiert sie aber nie formal. 🔧
 **Vorschlag:** Ein Swing High ist eine Kerze, deren Hoch höher ist als die
 Hochs der `n` Kerzen links und rechts (Standard-Fraktal, `n` konfigurierbar,
 z. B. `n = 1` oder `n = 2`). Swing Low spiegelbildlich.
-❓ *Rückfrage R1: `n` bestätigen (Vorschlag: n = 1 für „jede lokale
-Struktur", wie es Blakes Chart-Beispielen entspricht).*
+✅ *R1 bestätigt: `n = 1` („jede lokale Struktur").*
 
 - **External Swing:** der äußere (größere) Swing-Punkt einer Bewegung —
   im Video z. B. „this external swing low on the 5-minute".
@@ -116,8 +115,8 @@ FVGs existieren auf jedem Timeframe und werden mit ihrem Timeframe benannt
 - *Missachtet/disrespected:* eine Kerze schließt per Body vollständig
   durch die Zone hindurch (Video: „getting ran through … closing through
   them").
-❓ *Rückfrage R2: Diese Body-Close-Definition bestätigen (Wick-Durchstich
-allein = noch respektiert?).*
+✅ *R2 bestätigt: Missachtet = eine Kerze schließt per Body-Close komplett
+durch die Zone; ein reiner Wick reicht nicht aus.*
 
 **Mitigiert / unmitigiert:**
 - *Unmitigiert („unfilled"):* Preis hat die Zone seit Entstehung nicht
@@ -141,8 +140,8 @@ Aus dem Video:
 
 🔧 *Automatisierbar:* Sweep = `High > Referenz-High` (bzw. `Low <
 Referenz-Low`) mit anschließender Rückkehr unter/über die Referenz.
-❓ *Rückfrage R3: Muss die Sweep-Kerze zurückschließen (Close wieder
-unter dem alten Hoch), oder zählt der reine Durchstich?*
+✅ *R3 bestätigt: Der reine Wick-Durchstich zählt als Sweep — ein
+Kerzenschluss zurück hinter dem Level ist nicht erforderlich.*
 
 ### 2.5 Intermediate High / Intermediate Low „inside the gap"
 
@@ -170,7 +169,8 @@ into that area, perfectly rejecting it".
 
 🔧 *Präzisierung nötig:* „Opening-Preis der Serie" = Open der ersten Kerze
 der zusammenhängenden Down-Close-Serie, die das Level erreicht hat.
-❓ *Rückfrage R4: bestätigen (ggf. mit einem Screenshot verifizieren).*
+✅ *R4 bestätigt (ohne Screenshot-Verifikation): Anker = Open der ersten
+Kerze der Serie.*
 
 **Verstärkung laut Video:**
 - CISD **kombiniert mit FVG** ist „that much stronger" als ein CISD allein
@@ -193,7 +193,7 @@ Zusatzregel: **„draw out C of the range"** — die Mitte (50 %) der
 Wick-Range mit einbeziehen, „a lot of times we can go to it and that's how
 you really get those bottom tick entries".
 🔧 *Interpretation:* „C" = Consequent Encroachment = 50 %-Linie des Wicks.
-❓ *Rückfrage R5: bestätigen, dass die 50 %-Linie des Wicks gemeint ist.*
+✅ *R5 bestätigt: gemeint ist die 50 %-Linie des Wicks.*
 
 Der Rejection Block ist ein Key Level — kein Entry-Signal: „I'm not
 entering at these levels … I'm going to wait for confirmation."
@@ -210,9 +210,8 @@ dadurch die Rolle wechselt (Support ↔ Resistance):
 
 Blake wartet auf einen „**valid close**" / „good close" — er lässt schwache
 Closes aus („Wait, wait, wait. Still waiting for a good close").
-❓ *Rückfrage R6: „valid close" algorithmisch fassen — Vorschlag: Body-Close
-vollständig jenseits der fernen FVG-Kante; optional Mindestabstand in
-Ticks/Prozent. Bestätigen oder präzisieren.*
+✅ *R6 bestätigt: „valid close" = Body-Close vollständig jenseits der
+fernen FVG-Kante; kein zusätzlicher Mindestabstand nötig.*
 
 ### 2.9 Manipulation Leg
 
@@ -286,7 +285,7 @@ time frames gives me the clearest picture"); zur Markteröffnung zusätzlich
 | B3 | Bias und DOL müssen zusammenpassen: bullischer Bias → DOL ist ein Hoch (Buy-Side); bärischer Bias → DOL ist ein Tief. | Beispiele im Video |
 | B4 | **Mit dem Trend handeln.** An Allzeithochs: nur Longs; Shorts nur bei „such an obvious bearish bias". | „Trade with the trend … at all-time highs … literally just taking longs" |
 | B5 | Optionaler Zusatzcheck: **ES** (zweiter Index) sollte „relatively the same thing" tun; equal highs dort verstärken das DOL. | Beispiel 13. Mai |
-| B6 | Der Bias wird **vor** der Session bestimmt (im Video: Analyse „at around … a.m." vor Open) und gilt für den Tag; der 15m-Check zur Eröffnung kann ihn kippen (→ ❓ R7: darf der Bot den Bias intraday neu bewerten oder ist er für den Tag fix?). | „this is the chart that I was looking at at around a.m." |
+| B6 | Der Bias wird vor der Session bestimmt und ✅ **intraday laufend neu bewertet** (R7): Anpassung anhand der aktuellen Marktstruktur (15m-Check, respektierte/missachtete FVGs), dabei auch auf **starke Rejections** an Key Levels achten. | „this is the chart that I was looking at at around a.m."; R7-Antwort |
 
 ### Beispiel aus dem Video (Mittwoch, 13. Mai)
 
@@ -353,7 +352,7 @@ the minute charts for now."
 | C3 | Warte auf die **Inversion des höchsten vorhandenen Timeframe-FVG** in diesem Leg: eine Kerze (auf genau diesem Timeframe) schließt per Body durch das Gap in Trade-Richtung — mit „valid close" (2.8). | „whatever the highest time frame fair value gap is of that leg, that's where I'm going to be taking the trade off … wait for price to close through this two-minute gap on the 2-minute time frame" |
 | C4 | Beispiel-Logik: Gibt es nur ein 2m-Gap (kein 3m/4m/5m), ist das 2m das höchste → auf 2m-Inversion warten. Gibt es 1m+2m+3m+5m, ist das 5m das höchste. | mehrere Beispiele |
 | C5 | **Häufiger Anfängerfehler:** eine niedrigere TF-Inversion (z. B. 1m) im Leg nehmen, bevor die höchste invertiert ist → schlägt oft fehl, „because we haven't actually distributed through the whole entire leg". | wörtlich |
-| C6 | „Nine times out of 10" wartet Blake auf die höchste Inversion. Das kostet RR, bringt aber die beste Winrate — besonders für Prop-Firm-Konten empfohlen. **Bot-Default: immer höchste Inversion** (❓ R8: bestätigen). | wörtlich |
+| C6 | „Nine times out of 10" wartet Blake auf die höchste Inversion — ✅ R8: bevorzugte **Richtlinie, keine absolute Pflicht**. Bot-Default: höchste Inversion abwarten; Option `allow_lower_tf_inversion` (Default aus) für den Fortgeschrittenen-Modus. | wörtlich; R8 |
 | C7 | Ist die höchste Inversion nur ein **30s-Gap** (kein 1m+): Einstieg nur mit hoher Konfidenz/Erfahrung — **oder** konservative Variante: das **gesamte externe Leg** (externes 5m-Swing-Low → -High) heranziehen und dessen höchste Inversion abwarten. | bärisches Beispiel in §5 des Videos |
 
 ---
@@ -374,7 +373,7 @@ the minute charts for now."
 |---|---|---|
 | S1 | **Standard/Beginner-Default (und Mehrheit von Blakes Trades):** SL am **Swing Low** des Manipulation Legs (Long) bzw. **Swing High** (Short). | „If you're a beginner and you want the safest stop loss possible, put it at the swing low … that's for the majority of the trades" |
 | S2 | Alternativen (nach eigenem Backtest): am **Kerzenkörper**, am **FVG-Rand** (wenn im Leg ein Gap entstand), an einem **Order Block**. | „It can sometimes be at the body. Sometimes at the fair value gap … sometimes even there's an order block" |
-| S3 | Bot-Default: S1 (Swing); Alternativen als konfigurierbare Modi. ❓ R9: bestätigen. | — |
+| S3 | ✅ R9 bestätigt: Bot-Default = S1 (Swing des Manipulation Legs); Alternativen als konfigurierbare Modi. | R9 |
 
 ### 6.3 Take-Profit — „Low-Hanging Fruit"
 
@@ -382,7 +381,7 @@ the minute charts for now."
 |---|---|---|
 | T1 | Ziel-RR-Bereich: **1:1 bis 1:3**. | „I really aim for that 1:1 R to 1-to-3 RR" |
 | T2 | TP am **offensichtlichsten nahen High/Low** in Trade-Richtung auf dem LTF (nicht zwingend das HTF-DOL — bei 300 Punkten Distanz wird nicht durchgehalten). **Unfilled 15m-/1H-Gaps sind bevorzugte Ziele.** | „targeting low-hanging fruit … the most obvious high or low in the market that we are drawing towards … unfilled gaps are great draws" |
-| T3 | Liegt das offensichtliche Ziel **unter** 1:1 → TP „a little bit higher" auf exakt 1:1 legen (Beispiel 3). ❓ R10: soll der Bot das so machen oder das Setup verwerfen? | „I would just simply move my take profit a little bit higher for that one-to-one risk-reward" |
+| T3 | ✅ R10 bestätigt: Liegt das offensichtliche Ziel **unter** 1:1, legt der Bot den TP auf **mindestens 1:1** hinter das Low-Hanging-Fruit-Ziel (wie Blake in Beispiel 3). Das Setup wird **nicht** verworfen. | „I would just simply move my take profit a little bit higher for that one-to-one risk-reward"; R10 |
 | T4 | Bei sehr hoher Konfidenz hält Blake bis zum DOL — diskretionär; Bot-Default: T2. | „there are times … we're going for a draw and that's when I'll hold" |
 | T5 | Grund für kleine Ziele: Prop-Firm-Konsistenzregeln, Psychologie, Winrate. | wörtlich |
 
@@ -391,15 +390,17 @@ the minute charts for now."
 | # | Regel | Quelle |
 |---|---|---|
 | BE1 | BE-Trigger „majority of the time": Preis erreicht den **Swing des Manipulation Legs** (Long: das Swing High des Legs). Dann SL auf Einstand. | „It's majority of the time just at the manipulation leg … like this swing high" |
-| BE2 | Bei „stacked low resistance liquidity": BE-Trigger schon an diesem näheren Level. Diskretionär → ❓ R11: Bot-Default BE1, BE2 als Option? | „sometimes when you have like a lot of stacked low resistance liquidity, I'll put it at this" |
+| BE2 | Bei „stacked low resistance liquidity": BE-Trigger schon an diesem näheren Level. ✅ R11: Bot-Default = BE1 (Leg-Swing); BE2 bleibt diskretionär und wird nicht automatisiert. | „sometimes when you have like a lot of stacked low resistance liquidity, I'll put it at this"; R11 |
 | BE3 | Nach BE-Ausstopp gilt: entweder läuft der Preis zum **internen Low** (im Gap) zurück → dort kann ein **neues** Setup entstehen (Beispiel 1, zweiter Trade), oder die Idee ist **komplett invalide**. | „we're usually either going to go to that internal low inside of this gap … or the overall idea will just be invalidated altogether" |
 
 ### 6.5 Trailing Stop
 
 Im Video nur als gelegentliche, diskretionäre Option erwähnt: „sometimes
 I'll manage my positions by trailing my stop loss". Keine Regeln genannt.
-→ Bot: optionales Feature, Default aus (❓ R12: Trailing-Logik definieren,
-falls gewünscht — z. B. auf letzte Swing-Punkte nachziehen).
+✅ R12: Es gibt **keine feste Trailing-Stop-Logik** in der Strategie — der
+Bot bekommt keinen strategischen Trailing-Stop. Ein generisches, von der
+Strategie unabhängiges Trailing bleibt als optionales Feature vorgesehen
+(Nutzer-Grundanforderung „Trailing Stop optional"), Default aus.
 
 ### 6.6 Tageslimits & Frequenz
 
@@ -409,14 +410,14 @@ falls gewünscht — z. B. auf letzte Swing-Punkte nachziehen).
 | F2 | **1 Gewinn → Schluss für den Tag.** | „one win I am done for the day" |
 | F3 | **1 Verlust → im Regelfall Schluss.** Ausnahme: Nach einem Stop-out darf **ein** weiterer Trade genommen werden, wenn der Preis in ein **neues Key Level** handelt und **alles** wieder passt („if it's an A+ setup"). | „one loss I am probably also done … maybe price trades into a new key level. So I could take another trade. If everything aligns and if it's an A+ setup" |
 | F4 | **2 Verluste → definitiv Schluss.** | „if I take two losses in a day then I am done for the day" |
-| F5 | ❓ R13: „A+ setup" für den Bot definieren — Vorschlag: zweiter Trade nur bei Erreichen einer höheren Punkteschwelle im Punktesystem (§10). | — |
+| F5 | ✅ R13: **Keine** erhöhte Punkteschwelle für den zweiten Trade nach einem Verlust — es gilt dieselbe Mindestpunktzahl. Voraussetzung bleibt ein **neues Key Level** und alle Gates (F3). | R13 |
 
 ### 6.7 Session
 
 | # | Regel | Quelle |
 |---|---|---|
 | Z1 | Gehandelt wird **nur 9:30–11:00 Uhr ET** (vom Nutzer bestätigt; „golden hour", Peak-Stunden für Futures/NASDAQ). | „I'm only trading from [9:30] a.m. to [11:00] a.m. Eastern time" |
-| Z2 | Nach 11:00 „very, very rare" — nur wenn das Fenster schlecht war **und** viel Liquidität aufgebaut wurde. Diskretionär → **Bot-Default: harter Cut um 11:00 ET**, keine neuen Entries danach (❓ R14: bestätigen; offene Positionen dürfen weiterlaufen?). | „It is very, very rare I'll execute past 11" |
+| Z2 | ✅ R14 bestätigt: **Harter Cut um 11:00 ET** für neue Entries (die „very rare"-Ausnahme wird nicht automatisiert). Offene Positionen laufen bis TP/SL weiter — **kein** Zwangs-Flat zu einer Uhrzeit. | „It is very, very rare I'll execute past 11"; R14 |
 
 ### 6.8 Positionsgröße
 
@@ -424,6 +425,17 @@ falls gewünscht — z. B. auf letzte Swing-Punkte nachziehen).
 Der Bot rechnet gemäß Nutzer-Anforderung: `Kontrakte/Lots =
 (Kontostand × Risiko %) / (SL-Distanz × Punktwert)` — Risiko % ist ein
 Konfigurationsparameter (kein Video-Inhalt).
+
+✅ Nutzer-Entscheidungen R17/R18:
+- **Kein** fester Max-SL-Grenzwert als Strategie-Regel — die Qualität
+  steuert das Punktesystem. Als **Sicherheitsobergrenze** gilt: die
+  SL-Distanz darf **1000 nicht überschreiten** (Parameter
+  `max_sl_distance`, Default 1000 Punkte; Einheit wird in der
+  Spezifikation final bestätigt).
+- Gehandelt werden **ausschließlich Micro-Futures**, primär **MNQ**
+  (Micro Nasdaq-100, 0,25 Ticks, 0,50 $/Tick, 2 $/Punkt). Weitere
+  Micro-Futures optional zuschaltbar. Forex-Paare sind **nicht** Teil
+  der Strategie.
 
 ---
 
@@ -468,7 +480,7 @@ High, TP am nächsten offensichtlichen Tief (1:1–1:3), BE am Leg-Swing-Low.
 
 | # | Regel | Quelle |
 |---|---|---|
-| I1 | **Key Level = Entscheidungspunkt:** Bricht der Preis das Key Level nachhaltig (statt zu drehen), ist der Bias/die Idee „completely wrong" → kein Trade bzw. Idee verwerfen. 🔧 Vorschlag „nachhaltig" = Body-Close jenseits der Level-Zone (❓ R15). | „a high quality point in which price will either reverse from or your bias is just completely wrong" |
+| I1 | **Key Level = Entscheidungspunkt:** Bricht der Preis das Key Level nachhaltig (statt zu drehen), ist der Bias/die Idee „completely wrong" → kein Trade bzw. Idee verwerfen. ✅ R15 bestätigt: „nachhaltig" = Body-Close jenseits der Level-Zone. | „a high quality point in which price will either reverse from or your bias is just completely wrong"; R15 |
 | I2 | **Kein Entry ohne Inversion:** Solange die höchste TF-Inversion im Leg nicht bestätigt ist, existiert kein Trade. | §5 |
 | I3 | **Nach BE-Ausstopp:** Neues Setup **nur**, wenn der Preis ein internes Low/High (neues valides Level) erreicht und dort alles neu bestätigt; sonst ist die Idee invalide (BE3). | §6.4 |
 | I4 | **Verbote (Anti-Improvisation):** keine Stop-Verschiebung (außer BE/Trailing nach Regel), kein Nachkaufen von Verlierern, **kein sofortiger Re-Entry** nach Stop-out, keine spontanen Regeländerungen. | „you're moving your stops, you're adding to losers, you're re-entering right after you got stopped out, the entire strategy basically goes to trash" |
@@ -565,9 +577,9 @@ Punktwerte schlage ich in Schritt 3 vor; per Backtest kalibrierbar):
 | 9 | **Liquidity Sweep unmittelbar vor der Umkehr** (Sell-Side-Pool/Intermediate-Level abgeholt) | Beispiele 1 & 2 beginnen jeweils mit einem Sweep |
 | 10 (niedrigste Punkte) | **Höchste Inversion ≥ 1m** (kein reines 30s-Setup) | 30s ausdrücklich nur für Fortgeschrittene, „a lot of low-quality setups" dort |
 
-❓ R16: Diese Rangfolge bitte prüfen/bestätigen — konkrete Punktwerte und
-die Mindestpunktzahl (Trade-Schwelle; höhere Schwelle für den zweiten Trade
-nach einem Verlust, F5) folgen in der technischen Spezifikation.
+✅ R16: Rangfolge vom Nutzer bestätigt. Konkrete Punktwerte und die
+Mindestpunktzahl stehen in der technischen Spezifikation (`docs/SPEC.md`).
+Für den zweiten Trade nach einem Verlust gilt **dieselbe** Schwelle (R13).
 
 ---
 
@@ -606,7 +618,7 @@ vorkommen**. Hier wird nichts erfunden — Stand der Dinge:
 | **Fibonacci-Regeln** | 🚫 Kein Fibonacci-Tool, keine Retracement-Level im Video. Nur „EQ of the range" (50 %) und Premium/Discount als Lagebeschreibung (2.12). |
 | **Premium & Discount** | ⚠️ Nur als Qualitätsmerkmal eines Key Levels erwähnt — keine eigenständige Regel. |
 | **News-Filter (ForexFactory)** | 🚫 Im Video **nicht erwähnt**. Wird als **Bot-Zusatzfeature** (Nutzer-Anforderung) umgesetzt: optionaler Filter, der X Minuten vor/nach High-Impact-News (ForexFactory-Kalender) Entries blockiert. Parameter in Schritt 3. |
-| **Forex-Paare** | ⚠️ Das Video handelt **NQ-Futures** (ES als Referenz). Das Repo heißt „Forex", FTMO bietet Forex/Indizes-CFDs, Tradovate Futures. ❓ R18: Welche Märkte soll der Bot konkret handeln? (Die Strategie-Logik ist marktneutral formulierbar, aber validiert ist sie laut Video nur auf NQ.) |
+| **Forex-Paare** | ✅ R18 entschieden: Der Bot handelt **ausschließlich Micro-Futures, primär MNQ** (Micro Nasdaq-100); weitere Micro-Futures optional. Forex-Paare sind **nicht** Teil der Strategie. Hinweis: Auf FTMO/MT5 (R19) gibt es keine echten MNQ-Futures — das Instrument-Mapping (z. B. NAS100-CFD in Micro-Losgrößen) wird in der Spezifikation geklärt. |
 | **Backtesting** | ⚠️ Video: „back test one week worth of data every single day" (Hausaufgabe mit Tradezella). Für den Bot planen wir ein eigenes Backtest-Modul (Schritt 3). |
 
 ---
@@ -633,45 +645,34 @@ vorkommen**. Hier wird nichts erfunden — Stand der Dinge:
 
 ---
 
-## 14. Offene Rückfragen (Checkliste für Schritt 2)
+## 14. Review-Entscheidungen (Schritt 2 — abgeschlossen)
 
-Bitte kurz beantworten (Nummern reichen, z. B. „R1 ja, R7 fix, …"):
+Alle Rückfragen wurden vom Nutzer beantwortet. Verbindliche Entscheidungen:
 
-- **R1** Swing-Definition: Fraktal mit `n = 1` (jede lokale Struktur) ok?
-- **R2** FVG „missachtet" = Body-Close komplett durch die Zone; Wick allein
-  zählt nicht — ok?
-- **R3** Sweep: reicht der Durchstich per Wick, oder muss die Kerze wieder
-  hinter dem Level schließen?
-- **R4** CISD-Ankerpreis = Open der **ersten** Kerze der
-  Down-/Up-Close-Serie, die das Level erreicht hat — ok? (Screenshot hilft)
-- **R5** Rejection Block: „C of the range" = 50 %-Linie des Wicks — ok?
-- **R6** „Valid close" der Inversion = Body-Close vollständig jenseits der
-  fernen Gap-Kante — ok? Zusätzlicher Mindestabstand gewünscht?
-- **R7** Bias: einmal täglich vor Session fixiert oder intraday
-  neubewertbar (15m-Check)?
-- **R8** Bot wartet **immer** auf die höchste TF-Inversion im Leg
-  (Blakes 9-von-10-Regel als 10-von-10) — ok?
-- **R9** SL-Default = Swing des Manipulation Legs — ok?
-- **R10** Wenn Low-Hanging Fruit < 1:1 RR: TP auf 1:1 hinter das Ziel
-  legen (wie Blake) oder Setup verwerfen?
-- **R11** BE-Default: Trigger am Leg-Swing (BE1) — ok?
-- **R12** Trailing Stop: gewünscht? Wenn ja, welche Logik (Video gibt
-  keine vor)?
-- **R13** Zweiter Trade nach Verlust nur bei höherer Punkteschwelle — ok?
-- **R14** Harter Handelsschluss 11:00 ET für neue Entries; offene
-  Positionen laufen bis TP/SL weiter — ok? Oder Zwangs-Flat um Uhrzeit X?
-- **R15** Key-Level-Invalidierung = Body-Close jenseits der Zone — ok?
-- **R16** Punktesystem-Rangfolge in §10.2 bestätigen/ändern.
-- **R17** Max-SL-Distanz als Parameter (ersetzt Blakes Bauchgefühl bei
-  „zu großen" Stops, z. B. 124 Punkte) — gewünscht? Grenzwert?
-- **R18** Märkte: nur NQ? NQ + weitere Futures? Zusätzlich Forex-Paare
-  (FTMO)?
-- **R19** (Für Schritt 3) FTMO-Konto: auf welcher Plattform läuft es —
-  MT5, MT4, cTrader oder DXtrade?
+| # | Entscheidung |
+|---|---|
+| R1 | ✅ Swing-Fraktal mit `n = 1` |
+| R2 | ✅ FVG missachtet = Body-Close komplett durch die Zone; Wick allein reicht nicht |
+| R3 | ✅ Sweep = Wick-Durchstich genügt; kein Rückschluss hinter das Level nötig |
+| R4 | ✅ CISD-Anker = Open der ersten Kerze der Serie (ohne Screenshot-Verifikation akzeptiert) |
+| R5 | ✅ Rejection Block: „C of the range" = 50 %-Linie des Wicks |
+| R6 | ✅ Valid Close = Body-Close jenseits der fernen Gap-Kante; kein Mindestabstand |
+| R7 | ✅ Bias intraday laufend neubewertbar (15m-Check); zusätzlich auf starke Rejections achten |
+| R8 | ✅ Höchste TF-Inversion als Default (Richtlinie, keine absolute Pflicht; Option für niedrigere Inversion, Default aus) |
+| R9 | ✅ SL-Default am Swing des Manipulation Legs |
+| R10 | ✅ TP auf mindestens 1:1 hinter das Low-Hanging-Fruit-Ziel legen; Setup nicht verwerfen |
+| R11 | ✅ Break-even-Default am Leg-Swing (BE1) |
+| R12 | ✅ Kein strategischer Trailing-Stop (keine Video-Regel); generisches Trailing nur als optionales Feature, Default aus |
+| R13 | ✅ Keine erhöhte Punkteschwelle für den zweiten Trade nach Verlust |
+| R14 | ✅ Harter Entry-Schluss 11:00 ET; offene Positionen laufen bis TP/SL; kein Zwangs-Flat |
+| R15 | ✅ Key-Level-Invalidierung = Body-Close jenseits der Zone |
+| R16 | ✅ Punktesystem-Rangfolge (§10.2) bestätigt |
+| R17 | ✅ Kein strategischer Max-SL-Grenzwert; Sicherheitsobergrenze: SL-Distanz max. 1000 (Parameter; Einheit in SPEC.md final bestätigen) |
+| R18 | ✅ Ausschließlich Micro-Futures, primär **MNQ**; Forex-Paare nicht Teil der Strategie |
+| R19 | ✅ FTMO-Umsetzung auf **MetaTrader 5 (MT5)** |
 
 ---
 
-*Ende der Strategie-Dokumentation (Schritt 1). Nächster Schritt nach dem
-Review: technische Spezifikation (Architektur, Broker-Adapter
-Tradovate/FTMO, Punktesystem-Werte, Web-Plattform mit HTTPS +
-Referenzcode-Registrierung, Konfigurationsparameter, Backtesting).*
+*Ende der Strategie-Dokumentation. Schritt 1 + 2 abgeschlossen. Die
+technische Spezifikation (Schritt 3) steht in `docs/SPEC.md` —
+Implementierung (Schritt 4) erst nach Freigabe durch den Nutzer.*
