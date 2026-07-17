@@ -3,9 +3,9 @@
 | | |
 |---|---|
 | **Basis** | `docs/STRATEGY.md` (Schritt 1+2 abgeschlossen, alle Regeln vom Nutzer bestätigt) |
-| **Status** | Schritt 3 — **wartet auf Freigabe durch den Nutzer (Schritt 4: Implementierung)** |
-| **Märkte** | Ausschließlich Micro-Futures, primär **MNQ** (Micro Nasdaq-100); NQ/ES-Daten als SMT-Referenz |
-| **Konten** | Tradovate (Futures, native API) und FTMO über **MetaTrader 5** |
+| **Status** | Schritt 3 abgeschlossen, Entscheidungen F1–F7 eingearbeitet — **wartet auf finale Freigabe (Schritt 4)** |
+| **Märkte** | Micro-Risiko-Prinzip (R18): primär **NAS100/US100-CFD auf FTMO/MT5** (Signale auf den MT5-Kerzen, F3); **MNQ** via Tradovate optional, falls das Alpha-Futures-Konto API-Zugang behält (F7) |
+| **Konten** | **FTMO über MetaTrader 5 (primär)**; Tradovate optional (F7) |
 
 ---
 
@@ -27,7 +27,7 @@
 14. [Backtesting](#14-backtesting)
 15. [Projektstruktur](#15-projektstruktur)
 16. [Umsetzungsplan (Meilensteine)](#16-umsetzungsplan-meilensteine)
-17. [Offene Punkte vor der Freigabe](#17-offene-punkte-vor-der-freigabe)
+17. [Entscheidungen F1–F7](#17-entscheidungen-f1f7-beantwortet)
 
 ---
 
@@ -42,7 +42,9 @@ Bedienung:
   (konfigurierbar); keine Doppel-Einstiege.
 - Handel nur 9:30–11:00 ET (neue Entries), Tageslimits nach Strategie.
 - Punktesystem als Qualitätsfilter (bestätigte Rangfolge aus STRATEGY §10).
-- Konten: Tradovate und FTMO/MT5, beide über eine Adapter-Schnittstelle.
+- Konten: FTMO/MT5 (primär) und optional Tradovate, beide über eine
+  Adapter-Schnittstelle (F7: Tradovate nur, falls das Alpha-Futures-Konto
+  nach der Migration API-Zugang behält).
 - Telegram-Benachrichtigung bei jedem Trade-Ereignis.
 - Optionaler ForexFactory-News-Filter.
 - Web-Oberfläche: HTTPS, Accounts nur per Referenzcode des Inhabers,
@@ -61,8 +63,8 @@ nach 11:00 ET, ES-basiertes Exit-Management.
 ```mermaid
 flowchart LR
     subgraph Data["Daten"]
-        TDfeed["Tradovate WebSocket\n(Ticks/Bars MNQ, NQ, ES)"]
-        MT5feed["MT5-Bridge Feed\n(FTMO-Instrument)"]
+        MT5feed["MT5-Bridge Feed (primär)\n(US100; US500 für SMT)"]
+        TDfeed["Tradovate WebSocket (optional)\n(MNQ, NQ, ES)"]
         FF["ForexFactory\nKalender (wöchentl. JSON)"]
     end
 
@@ -141,14 +143,17 @@ flowchart LR
 
 ### 4.1 Daten-Pipeline
 
-- Basis-Feed: Ticks (Tradovate WS) bzw. 1m-Bars (MT5). Aggregation zu
+- Basis-Feed: 1m-Bars + Ticks aus MT5 (primär; F3 Option B) bzw. Ticks
+  über die Tradovate-WS (optional). Aggregation zu
   allen benötigten Timeframes: 1m, 2m, 3m, 4m, 5m, 15m, 30m, 1H, 4H, D
   (+ 30s aus Ticks, nur wenn `use_30s = true`).
 - Historie beim Start: genug Bars je TF laden (Daily ≥ 100, 4H/1H ≥ 300,
   LTF ≥ 500), damit Bias und Levels sofort berechenbar sind.
 - Zeitzone: alle Session-Logik in `America/New_York` (DST-sicher via
   `zoneinfo`).
-- Parallel-Feeds NQ und ES (Daten, kein Handel) für SMT.
+- Parallel-Feed des Vergleichsindex für SMT: auf MT5 der S&P-500-CFD
+  desselben Brokers (z. B. `US500`), im Futures-Setup ES. Symbolnamen
+  konfigurierbar.
 
 ### 4.2 Detektor-Module (reine Funktionen, einzeln testbar)
 
@@ -216,8 +221,8 @@ Regeln im Detail:
   (Preis = nähere Kante); Limit verfällt bei Level-Invalidierung oder
   Session-Ende (11:00 ET).
 - **SL (S1):** Swing des Manipulation Legs ± `sl_buffer_ticks`
-  (Default 0). Guard: SL-Distanz > `max_sl_distance` (1000 Punkte,
-  R17) → Setup verwerfen.
+  (Default 0). Guard: Dollarrisiko des Trades > `max_trade_risk_usd`
+  (1000 $, F1) → Setup verwerfen.
 - **TP (T1–T3, R10):** Low-Hanging Fruit = nächstes Ziel in
   Trade-Richtung aus {unfilled 15m/1H-Gap, nächstes externes Swing,
   equal highs/lows}; wenn RR(Ziel) < 1.0 → TP auf exakt 1:1 hinter das
@@ -285,7 +290,11 @@ Trade ohne sie), **Punkte** quantifizieren die Zusatzqualität.
   - `max_daily_loss_pct` (Default 2 %) — erreicht → `DONE_FOR_DAY`
   - `max_drawdown_pct` (Default 8 % vom Equity-Hoch) — erreicht →
     Bot-Stopp + Benachrichtigung (manuelles Re-Enable nötig)
-  - `max_sl_distance` (Default 1000 Punkte, R17)
+  - `max_trade_risk_usd` (Default **1000 $**, F1): Gesamt-Dollarrisiko
+    des Trades (SL-Distanz × Punkt-/Pipwert × Positionsgröße) darf
+    1000 $ nicht überschreiten; liegt schon die Mindestgröße
+    (1 Kontrakt bzw. kleinste Lot-Stufe) darüber, wird das Setup
+    verworfen
 - **Kill-Switch:** im Dashboard und per Telegram-Kommando `/stop` —
   keine neuen Entries; optional `/flat` schließt Positionen (nur Owner).
 - FTMO-Besonderheit: Tages-Verlustlimit der Prop-Firm wird als
@@ -302,16 +311,7 @@ Gemeinsames Interface `BrokerAdapter` (abstrakt):
 `modify_sl`, `cancel_order`, `close_position`, Ereignis-Callbacks
 (Fill, Reject, Disconnect).
 
-### 7.1 Tradovate
-
-- REST + WebSocket (Demo- und Live-Umgebung), Auth per API-Key/OAuth;
-  Market-Data-Abo des Nutzers erforderlich (CME-Daten).
-- Bracket-Order (Entry + OSO SL/TP) nativ; `client_key` = eigene
-  Order-ID → Doppel-Einstieg-Schutz auch nach Reconnect.
-- Kontrakt-Rollover: aktiver MNQ-Frontmonat wird automatisch anhand
-  Volumen/Verfall gewählt; Rollover-Warnung per Telegram.
-
-### 7.2 FTMO via MT5-Bridge
+### 7.1 FTMO via MT5-Bridge (primär)
 
 - Das offizielle `MetaTrader5`-Python-Package läuft **nur unter Windows**
   mit installiertem, eingeloggtem MT5-Terminal (FTMO-Konto).
@@ -319,12 +319,27 @@ Gemeinsames Interface `BrokerAdapter` (abstrakt):
   Windows-VPS; exponiert das `BrokerAdapter`-Interface als
   authentifizierte REST/WebSocket-API (nur über TLS + Token erreichbar);
   der Bot-Core spricht die Bridge wie jeden Adapter an.
-- ⚠️ **Instrument-Mapping:** FTMO/MT5 bietet keine echten MNQ-Futures,
-  sondern Index-CFDs (z. B. `NAS100`/`US100`). Die Strategie-Signale
-  werden auf MNQ-Daten (Tradovate-Feed) berechnet oder auf dem
-  MT5-Chart des CFDs — Entscheidung siehe §17/F3. Lot-Größen werden auf
-  die CFD-Kontraktgröße umgerechnet (Micro-Risiko bleibt über die
-  Risk-Engine gewahrt).
+- ✅ F3 (Option B): **Signale werden direkt auf den MT5-Kerzen des
+  gehandelten CFDs berechnet** (z. B. `US100`) — Signal- und
+  Ausführungschart sind identisch, keine Abweichungen. SMT über den
+  Index-CFD desselben Brokers (z. B. `US500`).
+- Instrument: FTMO/MT5 bietet keine echten MNQ-Futures, sondern
+  Index-CFDs. Die Risk-Engine berechnet die Lot-Größe in den kleinsten
+  Lot-Stufen so, dass das Dollar-Risiko dem Micro-Prinzip (R18)
+  entspricht.
+
+### 7.2 Tradovate (optional, F7)
+
+- ⚠️ Der Nutzer handelt Alpha-Futures-„Zero"-Konten; nach deren
+  Migration auf die eigene Alpha-Infrastruktur ist **unklar**, ob
+  weiterhin Tradovate-API-Zugang + CME-Datenabo bestehen. → Vor der
+  Umsetzung beim Alpha-Futures-Support klären; der Adapter wird erst
+  gebaut, wenn der Zugang bestätigt ist (Meilenstein M6, optional).
+- Technik (falls verfügbar): REST + WebSocket (Demo/Live), Auth per
+  API-Key/OAuth; CME-Market-Data-Abo erforderlich; native Bracket-Order
+  (Entry + OSO SL/TP); `client_key` = eigene Order-ID →
+  Doppel-Einstieg-Schutz auch nach Reconnect; automatischer
+  MNQ-Frontmonat-Rollover mit Telegram-Warnung.
 
 ---
 
@@ -438,7 +453,7 @@ Versionierung. Defaults:
 
 | Parameter | Default | Bedeutung |
 |---|---|---|
-| `markets` | `["MNQ"]` | nur Micro-Futures (R18); weitere Micros zuschaltbar |
+| `markets` | `["US100"]` (MT5) bzw. `["MNQ"]` (Tradovate) | Micro-Risiko-Prinzip (R18/F7); Symbol je Konto konfigurierbar |
 | `risk_per_trade_pct` | `1.0` | Risiko pro Trade in % vom Equity |
 | `rr_min` / `rr_max` | `1.0` / `3.0` | RR-Fenster (T1) |
 | `score_threshold` | `40` | Mindestpunktzahl (§5) |
@@ -460,7 +475,7 @@ Versionierung. Defaults:
 | `use_external_leg` | `false` | konservative Leg-Variante (C7) |
 | `sl_mode` | `"swing"` | S1; Alternativen `body`/`fvg` |
 | `sl_buffer_ticks` / `be_offset_ticks` | `0` / `0` | Feinjustierung |
-| `max_sl_distance` | `1000` (Punkte) | R17-Sicherheitsgrenze |
+| `max_trade_risk_usd` | `1000` | F1: maximales Dollar-Risiko pro Trade |
 | `breakeven_enabled` | `true` | BE1 (R11) |
 | `trailing_enabled` | `false` | generisch, kein Strategie-Teil (R12) |
 | `news_filter_enabled` | `false` | §8 |
@@ -479,8 +494,10 @@ Versionierung. Defaults:
 - Metriken: Winrate, Profit-Faktor, Ø R, max. Drawdown, Ergebnisse je
   Score-Band (kalibriert `score_threshold` und die Gewichte),
   Verteilung nach Uhrzeit/Wochentag.
-- Datenquelle: Tradovate-Historie (begrenzt) und/oder CSV-Import;
-  Empfehlung für saubere Tick-Historie: externer Datenanbieter (§17/F4).
+- Datenquelle (✅ F4): hochwertiger externer Datenanbieter für die
+  1m-Historie (Budget vom Nutzer freigegeben) + CSV-Import; danach
+  Validierung unter realen MT5-Bedingungen (Spread/Kommission des
+  FTMO-Kontos, Forward-Test auf Demo).
 - Video-Homework als Feature: „1 Woche pro Tag" replayen; Export ins
   Journal.
 
@@ -525,8 +542,8 @@ Forex/
 | M2 | Detektoren | Alle Module aus §4.2 + Unit-Tests mit synthetischen Kerzen; Golden-Tests, die die 3 Video-Beispiele nachstellen | Detektoren nachweislich regelkonform |
 | M3 | Strategie | Bias-Engine, Key-Level-Manager, State-Machine, Scoring, Session-Filter — im Paper-Modus (Simulations-Broker) | Bot erzeugt Signale auf Live-Daten ohne echte Orders |
 | M4 | Backtester | §14 komplett; Kalibrierung von `score_threshold` | Backtest-Report über mehrere Wochen MNQ |
-| M5 | Tradovate | Adapter, Risk-Engine, Order-Management, Recovery — **zuerst Demo-Konto** | Kompletter Trade-Zyklus auf Tradovate-Demo |
-| M6 | FTMO/MT5 | Bridge-Dienst + Adapter; Test auf FTMO-Free-Trial | Trade-Zyklus auf FTMO-Demo |
+| M5 | FTMO/MT5 (primär) | Bridge-Dienst + Adapter, Risk-Engine, Order-Management, Recovery — **zuerst FTMO-Free-Trial/Demo** | Kompletter Trade-Zyklus auf FTMO-Demo |
+| M6 | Tradovate (optional) | Adapter nur, falls Alpha-Futures den API-Zugang bestätigt (F7) | Trade-Zyklus auf Tradovate-Demo |
 | M7 | Plattform | Web (Auth, Referenzcodes, Dashboard, Config), Telegram, News-Filter, Deployment (Docker + Caddy/HTTPS) | Ende-zu-Ende-Abnahme durch dich |
 
 Reihenfolge fix; nach jedem Meilenstein kurzer Zwischenbericht.
@@ -535,33 +552,20 @@ Bestätigung nach erfolgreicher Demo-Phase.**
 
 ---
 
-## 17. Offene Punkte vor der Freigabe
+## 17. Entscheidungen F1–F7 (beantwortet)
 
-Bitte kurz beantworten (F-Nummern reichen):
-
-- **F1 — Einheit der SL-Obergrenze:** „1000 nicht überschreiten" —
-  gemeint als **1000 MNQ-Punkte** (= 2000 $ Risiko/Kontrakt)? Oder
-  1000 Ticks (= 250 Punkte) bzw. 1000 $? Default aktuell: 1000 Punkte.
-- **F2 — Risiko-Default:** 1 % pro Trade ok? (Bei FTMO-Konten üblich:
-  0,5–1 %.)
-- **F3 — FTMO-Signalquelle:** Auf FTMO/MT5 gibt es kein echtes MNQ —
-  sollen die Signale (a) aus dem MNQ-Feed (Tradovate) berechnet und auf
-  das NAS100-CFD übertragen werden, oder (b) direkt auf den
-  MT5-CFD-Kerzen berechnet werden? Empfehlung: **(b)** — Signale und
-  Ausführung auf demselben Chart vermeiden Abweichungen.
-- **F4 — Backtest-Daten:** Reicht die bei Tradovate/MT5 verfügbare
-  Historie, oder Budget für einen Datenanbieter (z. B. Databento,
-  ~ab 10–30 $ einmalig für MNQ-1m-Historie)?
-- **F5 — Telegram:** Erstellst du den Bot-Token über @BotFather und
-  stellst ihn bereit? (2 Minuten Aufwand, Anleitung liefere ich.)
-- **F6 — Hosting:** Hast du bereits einen Server/VPS (Linux für
-  Core+Web; zusätzlich ein Windows-VPS für die MT5-Bridge) und eine
-  Domain für die Webseite, oder soll ich Anforderungen/Empfehlungen
-  dazu in die Doku aufnehmen?
-- **F7 — Tradovate-Zugang:** Hast du ein Tradovate-Konto mit
-  API-Zugang + CME-Marktdaten-Abo (nötig für Live-Daten)?
+| # | Entscheidung |
+|---|---|
+| F1 | ✅ SL-Obergrenze = **1000 $ Gesamt-Dollarrisiko** pro Trade (`max_trade_risk_usd`) |
+| F2 | ✅ Risiko-Default **1 %** pro Trade |
+| F3 | ✅ **Option B**: Signale direkt auf den MT5-CFD-Kerzen des gehandelten Instruments |
+| F4 | ✅ Budget für hochwertigen Datenanbieter (1m-Historie) freigegeben; danach Validierung unter MT5-Bedingungen |
+| F5 | ✅ Nutzer erstellt den Telegram-Bot selbst — Schritt-für-Schritt-Anleitung: `docs/ANLEITUNG_TELEGRAM.md` |
+| F6 | ✅ Noch kein Server/keine Domain vorhanden. Das **Mieten** (Konto + Zahlung beim Anbieter) kann nur der Nutzer selbst erledigen — dafür gibt es die einfache Kauf-Anleitung `docs/ANLEITUNG_SERVER.md`; die **komplette technische Einrichtung** danach liefert das Projekt fertig automatisiert (Docker + Setup-Skripte, M7: Copy-Paste von 2–3 Befehlen). |
+| F7 | ⚠️ Alpha-Futures-„Zero"-Konten nach Migration evtl. ohne Tradovate-API → **FTMO/MT5 ist der primäre Weg** (M5); Tradovate-Adapter nur nach Bestätigung durch den Alpha-Futures-Support (M6, optional). |
 
 ---
 
-*Nach deiner Freigabe (und Antworten auf F1–F7) beginnt Schritt 4:
-Implementierung nach Meilensteinplan §16, beginnend mit M1+M2.*
+*Alle Entscheidungen liegen vor. Nach der finalen Freigabe des Nutzers
+beginnt Schritt 4: Implementierung nach Meilensteinplan §16, beginnend
+mit M1+M2.*
