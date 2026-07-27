@@ -86,8 +86,12 @@ Branch: `claude/pb-blake-trading-bot-fwaul9`
   IFVG-Inversion (R6, inkl. Leg-Filter C2 und Höchst-Timeframe-Auswahl
   C3/R8), SMT-Divergenz; Timeframe-Aggregation (`bot/data/aggregator.py`).
   48 Tests grün, inkl. Golden-Tests der 3 Video-Beispiele.
-- [ ] **M3** — Bias-Engine, Key-Level-Manager, Setup-State-Machine,
-  Scoring-Engine, Paper-Modus (nächster Schritt)
+- [~] **M3** — läuft. Fertig: Bias-Engine (`bot/bias/engine.py`, Commit
+  f1ecb99 — HTF-Bias aus jüngstem FVG je Richtung B1/R2, Gesamtbias nur
+  bei TF-Übereinstimmung, 15m-Intraday-Check R7, Draw on Liquidity).
+  **Noch offen in M3:** Key-Level-Manager (§4.4, K1–K8), Scoring-Engine
+  (§5, Gates + Gewichte), Setup-State-Machine (§4.5, IDLE→…→CLOSED),
+  Risk-Engine (§6, Sizing/Limits/Kill-Switch), Paper-Modus, Tests.
 - [ ] **M4** — Backtester
 - [ ] **M5** — FTMO/MT5-Bridge (primärer Broker-Adapter)
 - [ ] **M6** — Tradovate-Adapter (optional, nach F7-Klärung)
